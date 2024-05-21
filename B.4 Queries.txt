@@ -1,0 +1,110 @@
+
+1. Find all Authors.
+
+PREFIX gf: <http://www.gra.fo/schema/untitled-ekg#>
+PREFIX ex: <http://www.gra.fo/resource/>
+
+SELECT DISTINCT ?author ?authorName
+WHERE {
+  ?author a gf:Author .
+  ?author gf:author_name ?authorName .
+}
+
+
+2. Find all properties whose domain is Author.
+
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX gf: <http://www.gra.fo/schema/untitled-ekg#>
+
+SELECT DISTINCT ?property
+WHERE {
+  ?property rdfs:domain gf:Author .
+}
+
+3 Find all properties whose domain is either Conference or Journal.
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX gf: <http://www.gra.fo/schema/untitled-ekg#>
+
+SELECT DISTINCT ?property
+WHERE {
+  {
+    ?property rdfs:domain gf:Conference .
+  }
+  UNION
+  {
+    ?property rdfs:domain gf:Journal .
+  }
+}
+
+
+4. Find all the papers written by author Riveros%20C that where published in database conferences.
+PREFIX schema: <http://www.gra.fo/schema/untitled-ekg#>
+PREFIX gf: <http://www.gra.fo/resource/>
+
+SELECT ?paper ?paper_title
+WHERE {
+  ?conference rdf:type schema:Conference .
+  FILTER regex(str(?conference), "Database", "i")
+  ?proceeding schema:collection_of_conference ?conference ;
+              rdf:type schema:Proceeding_conference .
+  ?paper schema:published_in_proceeding ?proceeding ;
+         rdf:type schema:Paper ;
+         schema:written_by ?author ;
+         schema:title ?paper_title .
+  ?author schema:author_name <http://sdm_lab2/Amarilli%20A.> .
+}
+
+PREFIX schema: <http://www.gra.fo/schema/untitled-ekg#>
+PREFIX gf: <http://www.gra.fo/resource/>
+
+SELECT ?paper ?paper_title
+WHERE {
+  ?conference rdf:type schema:Conference .
+  FILTER regex(str(?conference), "Database", "i")
+  ?proceeding schema:collection_of_conference ?conference ;
+              rdf:type schema:Proceeding_conference .
+  ?paper schema:published_in_proceeding ?proceeding ;
+         rdf:type schema:Paper ;
+         schema:written_by ?author ;
+         schema:title ?paper_title .
+  ?author schema:author_name <http://sdm_lab2/Riveros%20C.> .
+}
+
+5. Find the author that having the most citations in Computational conferences.
+
+PREFIX schema: <http://www.gra.fo/schema/untitled-ekg#>
+
+SELECT ?author_name (COUNT(?citation) AS ?citation_count)
+WHERE {
+  ?conference rdf:type schema:Conference .
+  FILTER regex(str(?conference), "Computational", "i")
+  ?proceeding schema:collection_of_conference ?conference ;
+             rdf:type schema:Proceeding_conference .
+  ?paper schema:published_in_proceeding ?proceeding ;
+         rdf:type schema:Paper ;
+         schema:written_by ?author .
+  ?author schema:author_name ?author_name .
+  OPTIONAL {
+    ?paper schema:cites ?citation .
+  }
+}
+GROUP BY ?author_name
+ORDER BY DESC(?citation_count)
+LIMIT 1
+
+6. Find the author that published most papers in journals.
+
+PREFIX schema: <http://www.gra.fo/schema/untitled-ekg#>
+PREFIX gf: <http://www.gra.fo/resource/>
+
+SELECT ?author_name (COUNT(?paper) AS ?paper_count)
+WHERE {
+  ?journal rdf:type schema:Journal .
+  ?paper schema:paper_belong_to_journal ?journal ;
+         rdf:type schema:Paper ;
+         schema:written_by ?author .
+  ?author schema:author_name ?author_name .
+}
+GROUP BY ?author_name
+ORDER BY DESC(?paper_count)
+LIMIT 1
